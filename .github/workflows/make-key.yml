@@ -1,0 +1,41 @@
+name: Create signing key (run once)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  make-key:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Check the secrets exist
+        env:
+          PASS: ${{ secrets.PUTHI_KS_PASS }}
+          ALIAS: ${{ secrets.PUTHI_KEY_ALIAS }}
+        run: |
+          if [ -z "$PASS" ] || [ -z "$ALIAS" ]; then
+            echo "Create the secrets PUTHI_KS_PASS, PUTHI_KEY_PASS and PUTHI_KEY_ALIAS first (see the guide)."; exit 1
+          fi
+          if [ "${#PASS}" -lt 12 ]; then echo "Use a password of at least 12 characters."; exit 1; fi
+
+      - name: Create the key
+        env:
+          PASS: ${{ secrets.PUTHI_KS_PASS }}
+          ALIAS: ${{ secrets.PUTHI_KEY_ALIAS }}
+        run: |
+          keytool -genkeypair -keystore puthi.jks -alias "$ALIAS" -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "$PASS" -keypass "$PASS" -dname "CN=Puthi, O=Touhidul Islam, C=BD"
+          base64 -w0 puthi.jks > puthi-keystore-base64.txt
+          ls -l puthi.jks puthi-keystore-base64.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: puthi-signing-key
+          path: |
+            puthi.jks
+            puthi-keystore-base64.txt
+          retention-days: 1
