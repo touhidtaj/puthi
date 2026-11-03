@@ -1,32 +1,35 @@
-# পুঁথি (Puthi) — Android
+<div align="center">
 
-A tiny WebView shell around the Puthi PDF reader. No dependencies, no internet permission.
+# পুঁথি · Puthi
 
-## Build the APK on GitHub (no Android Studio needed)
-1. Create a new GitHub repo and upload everything in this folder (keep `.github/`).
-2. **Actions → Build APK → Run workflow.**
-3. When it finishes, download `puthi-apk` from the run's *Artifacts* → `puthi-v1.0.apk`.
+**A quiet place to read.** A distraction-free offline PDF reader for Android.
 
-## Signing (do this once, keep the key forever)
-Easiest, no terminal: set the secrets `PUTHI_KS_PASS` (same value as `PUTHI_KEY_PASS`, 12+ characters) and `PUTHI_KEY_ALIAS` (e.g. `puthi`), run **Actions → Create signing key (run once)**, download the `puthi-signing-key` artifact right away, back up `puthi.jks` in two places, paste the text from `puthi-keystore-base64.txt` into a new secret `PUTHI_KEYSTORE_B64`, then delete the artifact and re-run *Build APK*.
+</div>
 
-Manual alternative:
-Without secrets the APK is signed with a throwaway debug key — installable, but you can never update it
-over a different build. For a real release:
-```
-keytool -genkeypair -v -keystore puthi.jks -alias puthi -keyalg RSA -keysize 2048 -validity 10000
-base64 -w0 puthi.jks      # paste into the secret below
-```
-Repo → Settings → Secrets → Actions: `PUTHI_KEYSTORE_B64`, `PUTHI_KS_PASS`, `PUTHI_KEY_ALIAS`, `PUTHI_KEY_PASS`.
-**Back up puthi.jks. Lose it and users must uninstall to update.**
+Puthi finds the PDFs on your phone, shows them as a bookshelf, and opens them full-screen. It supports highlights, notes, page remarks, English / বাংলা / العربية, and exporting notes to Word or PDF. It requests no internet permission.
 
-Push a tag like `v1.0` to also attach the APK to a GitHub Release (use this link on the website).
+## How this repository works
 
-## Updating the web app
-Run `python3 build_android.py` in the main project; it regenerates `app/src/main/assets/`. Bump `versionCode` in `app/build.gradle`.
+The app is a minimal Android WebView shell (plain Java, no libraries) that loads a single-page reader from its assets. The APK is built automatically by GitHub Actions. There is nothing to install on a computer.
 
-## Permissions
-- **All files access** (Android 11+): powers "Scan this phone". Sideloaded APKs are fine; Google Play needs a special declaration.
-- Manual pick (files / folder) works without it.
-- Android 10: scan is unavailable; use manual pick. Android 11+ blocks choosing the Downloads root as a folder — pick files, or use "Scan this phone".
-- Removable SD cards are not scanned automatically.
+| File | Purpose |
+|---|---|
+| `app/src/main/assets/index.html` | The reader (all of the interface) |
+| `app/src/main/java/com/puthi/reader/MainActivity.java` | Android shell: file access, scanning, immersive mode |
+| `.github/workflows/build-apk.yml` | Builds the APK (Actions → Build APK → Run workflow) |
+| `.github/workflows/make-key.yml` | One-time creation of the signing key |
+
+## Building
+
+1. Open the **Actions** tab, choose **Build APK**, press **Run workflow**.
+2. After about two minutes, download `puthi-apk` from the run's Artifacts.
+
+Releases are signed with a permanent key stored in the repository's secrets (`PUTHI_KEYSTORE_B64`, `PUTHI_KS_PASS`, `PUTHI_KEY_PASS`, `PUTHI_KEY_ALIAS`). Keep a private backup of the key file. Without it, installed copies can never be updated.
+
+## Credits
+
+Designed and built by **Touhidul Islam** · [facebook.com/TouhidDesigner](https://www.facebook.com/TouhidDesigner/)
+
+Uses [PDF.js](https://mozilla.github.io/pdf.js/) (Apache-2.0) and the Inter and Noto fonts (SIL Open Font License).
+
+© 2026 Touhidul Islam. All rights reserved.
