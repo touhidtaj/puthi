@@ -1,0 +1,63 @@
+name: Build APK
+
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Minify pdf.js (shrinks the APK; skipped if it fails)
+        working-directory: app/src/main/assets
+        run: |
+          for f in pdf.js pdf.worker.js; do
+            if npx --yes terser@5.31.6 "$f" -c -m -o "$f.min"; then mv "$f.min" "$f"; else echo "terser failed on $f, keeping original"; rm -f "$f.min"; fi
+          done
+          ls -l
+
+      - name: Decode keystore (if provided)
+        env:
+          KS_B64: ${{ secrets.PUTHI_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/puthi.jks"
+            echo "PUTHI_KEYSTORE=$RUNNER_TEMP/puthi.jks" >> "$GITHUB_ENV"
+            echo "PUTHI_KS_PASS=${{ secrets.PUTHI_KS_PASS }}" >> "$GITHUB_ENV"
+            echo "PUTHI_KEY_ALIAS=${{ secrets.PUTHI_KEY_ALIAS }}" >> "$GITHUB_ENV"
+            echo "PUTHI_KEY_PASS=${{ secrets.PUTHI_KEY_PASS }}" >> "$GITHUB_ENV"
+          else
+            echo "No keystore secret: APK will be signed with the debug key."
+          fi
+
+      - name: Build release APK
+        run: gradle --no-daemon assembleRelease
+
+      - name: Rename and report size
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/release/*.apk dist/puthi-v1.0.apk
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: puthi-apk
+          path: dist/puthi-v1.0.apk
+
+      - name: Attach to release (tags only)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/puthi-v1.0.apk
