@@ -70,6 +70,6 @@
     <path android:fillColor="#ff5a3c" android:pathData="M47.95,58.85h4.1v4.1h-4.1z"/>
     <path android:fillColor="#ff5a3c" android:pathData="M52.55,58.85h4.1v4.1h-4.1z"/>
     <path android:fillColor="#e2381f" android:pathData="M57.15,58.85h4.1v4.1h-4.1z"/>
-    <path android:pathData="M10,77H40L50,88L60,77H90" android:strokeColor="#f6efe4" android:strokeWidth="10" android:strokeLineJoin="bevel"/>
+    <path android:pathData="M10 77h29.756c0.156 0 0.305 0.066 0.41 0.182l8.197 9.016c0.879 0.967 2.398 0.967 3.277 0l8.197 -9.016c0.105 -0.115 0.254 -0.182 0.41 -0.182h29.756" android:strokeColor="#f6efe4" android:strokeWidth="10" android:strokeLineJoin="bevel"/>
   </group>
 </vector>
